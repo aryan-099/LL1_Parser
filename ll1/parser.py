@@ -481,6 +481,7 @@ term_userdef=['a','c','b','d']
 sample_input_string="b c b"
 # diction - store rules inputted
 # firsts - store computed firsts
+
 diction = {}
 firsts = {}
 follows = {}
