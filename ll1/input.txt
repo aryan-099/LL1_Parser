@@ -1,86 +1,151 @@
-# sample set 1 (Result: Not LL(1))
-rules=["A -> S B | B",
-       "S -> a | B c | #",
-        "B -> b | d"]
-nonterm_userdef=['A','S','B']
-term_userdef=['a','c','b','d']
-sample_input_string="b c b"
+# ✅ LL(1) Compatible Grammars
 
-# sample set 2 (Result: LL(1))
-rules=["S -> A | B C",
-        "A -> a | b",
-        "B -> p | #",
-        "C -> c"]
-nonterm_userdef=['A','S','B','C']
-term_userdef=['a','c','b','p']
-sample_input_string="p c"
+# Test Case 1: Arithmetic Expressions
+# LL(1) - 💬 No left recursion
+#  Input: ( id + id ) * id
+#  Valid
+rules1 = [
+    "E -> T A",
+    "A -> + T A | #",
+    "T -> F B",
+    "B -> * F B | #",
+    "F -> ( E ) | id"
+]
+nonterm1 = ['E', 'A', 'T', 'B', 'F']
+term1 = ['+', '*', '(', ')', 'id']
+input1 = "( id + id ) * id"
+print("----- Test Case 1 -----")
+test_grammar(rules1, nonterm1, term1, input1)
 
-# sample set 3 (Result: LL(1))
-rules=["S -> A B | C",
-        "A -> a | b | #",
-        "B-> p | #",
-        "C -> c"]
-nonterm_userdef=['A','S','B','C']
-term_userdef=['a','c','b','p']
-sample_input_string="a c b"
+# Test Case 4: While Loop
+# ✅ LL(1) - 💬 No left recursion
+# 📥 Input: while id do id
+# 🟩 Valid
+rules4 = [
+    "S -> while E do S | id",
+    "E -> id"
+]
+nonterm4 = ['S', 'E']
+term4 = ['while', 'do', 'id']
+input4 = "while id do id"
+print("----- Test Case 4 -----")
+test_grammar(rules4, nonterm4, term4, input4)
 
-# sample set 4 (Result: Not LL(1))
-rules = ["S -> A B C | C",
-          "A -> a | b B | #",
-          "B -> p | #",
-         "C -> c"]
-nonterm_userdef=['A','S','B','C']
-term_userdef=['a','c','b','p']
-sample_input_string="b p p c"
+# Test Case 6: Exponentiation and Multiplication
+# ✅ LL(1) - 💬 No left recursion
+# 📥 Input: id ^ id * id
+# 🟩 Valid
+rules6 = [
+    "E -> T E'",
+    "E' -> ^ T E' | #",
+    "T -> F T'",
+    "T' -> * F T' | #",
+    "F -> ( E ) | id"
+]
+nonterm6 = ['E', "E'", 'T', "T'", 'F']
+term6 = ['^', '*', '(', ')', 'id']
+input6 = "id ^ id * id"
+print("----- Test Case 6 -----")
+test_grammar(rules6, nonterm6, term6, input6)
 
-#sample set 5 (With left recursion)
-rules=["A -> B C c | g D B",
-        "B -> b C D E | #",
-        "C -> D a B | c a",
-        "D -> # | d D",
-        "E -> E a f | c"
-       ]
-nonterm_userdef=['A','B','C','D','E']
-term_userdef=["a","b","c","d","f","g"]
-sample_input_string="b a c a c"
+# Test Case 8: Palindromes Over {a,b}
+# ✅ LL(1) - 💬 No left recursion
+# 📥 Input: a b b a
+# 🟩 Valid
+rules8 = [
+    "S -> a S a | b S b | a | b | #"
+]
+nonterm8 = ['S']
+term8 = ['a', 'b']
+input8 = "a b b a"
+print("----- Test Case 8 -----")
+test_grammar(rules8, nonterm8, term8, input8)
 
-#sample set 6
-rules=["E -> T E'",
-        "E' -> + T E' | #",
-        "T -> F T'",
-        "T' -> * F T' | #",
-        "F -> ( E ) | id"
- ]
-nonterm_userdef=['E','E\'','F','T','T\'']
-term_userdef=['id','+','*','(',')']
-sample_input_string="id * * id"
-example string 1
-sample_input_string="( id * id )"
-example string 2
-sample_input_string="( id ) * id + id"
+# Test Case 10: Simple Function Calls
+# ✅ LL(1) - 💬 No left recursion
+# 📥 Input: id ( id , id )
+# 🟩 Valid
+rules10 = [
+    "S -> id ( A )",
+    "A -> id , A | id | #"
+]
+nonterm10 = ['S', 'A']
+term10 = ['id', '(', ')', ',']
+input10 = "id ( id , id )"
+print("----- Test Case 10 -----")
+test_grammar(rules10, nonterm10, term10, input10)
 
-#sample set 7 (left factoring & recursion present)
-rules=["S -> A k O",
-       "A -> A d | a B | a C",
-       "C -> c",
-       "B -> b B C | r"]
 
-nonterm_userdef=['A','B','C']
-term_userdef=['k','O','d','a','c','b','r']
-sample_input_string="a r k O"
+# ❌ Non-LL(1) or Problematic Grammars
 
-#sample set 8 (Multiple char symbols T & NT)
-rules = ["S -> NP VP",
-          "NP -> P | PN | D N",
-          "VP -> V NP",
-          "N -> championship | ball | toss",
-          "V -> is | want | won | played",
-          "P -> me | I | you",
-          "PN -> India | Australia | Steve | John",
-          "D -> the | a | an"]
+# Test Case 2: Assignment with Left Recursion
+# ❌ Not LL(1) - 💬 Left recursion in E -> E + T
+# 📥 Input: id = id + id
+# 🟩 Valid (but only if parser supports left recursion)
+rules2 = [
+    "S -> id = E",
+    "E -> E + T | T",
+    "T -> id"
+]
+nonterm2 = ['S', 'E', 'T']
+term2 = ['id', '=', '+']
+input2 = "id = id + id"
+print("----- Test Case 2 -----")
+test_grammar(rules2, nonterm2, term2, input2)
 
-nonterm_userdef = ['S', 'NP', 'VP', 'N', 'V', 'P', 'PN', 'D']
-term_userdef = ["championship", "ball", "toss", "is", "want",
-                 "won", "played", "me", "I", "you", "India",
-                 "Australia","Steve", "John", "the", "a", "an"]
-sample_input_string = "India won the championship"
+# Test Case 3: If-Else (Ambiguous)
+# ❌ Not LL(1) - 💬 FIRST/FOLLOW conflict (dangling else)
+# 📥 Input: if id then id else id
+# 🟩 Valid (but ambiguity means it's not LL(1) safe)
+rules3 = [
+    "S -> if E then S else S | id",
+    "E -> id"
+]
+nonterm3 = ['S', 'E']
+term3 = ['if', 'then', 'else', 'id']
+input3 = "if id then id else id"
+print("----- Test Case 3 -----")
+test_grammar(rules3, nonterm3, term3, input3)
+
+# Test Case 5: Boolean Expressions
+# ❌ Not LL(1) - 💬 Left recursion in E -> E or T and T -> T and F
+# 📥 Input: not id and id or id
+# 🟩 Valid (in general, but not safe under LL(1))
+rules5 = [
+    "S -> E",
+    "E -> E or T | T",
+    "T -> T and F | F",
+    "F -> not F | ( E ) | id"
+]
+nonterm5 = ['S', 'E', 'T', 'F']
+term5 = ['or', 'and', 'not', '(', ')', 'id']
+input5 = "not id and id or id"
+print("----- Test Case 5 -----")
+test_grammar(rules5, nonterm5, term5, input5)
+
+# Test Case 7: List Grammar (Left Recursion)
+# ❌ Not LL(1) - 💬 Left recursion in L -> id , L
+# 📥 Input: id , id , id
+# 🟩 Valid (structure-wise, but not LL(1)-safe)
+rules7 = [
+    "L -> id , L | id"
+]
+nonterm7 = ['L']
+term7 = ['id', ',']
+input7 = "id , id , id"
+print("----- Test Case 7 -----")
+test_grammar(rules7, nonterm7, term7, input7)
+
+# Test Case 9: Arithmetic with + and -
+# ❌ Not LL(1) - 💬 Left recursion in E -> E + T | E - T
+# 📥 Input: id + id - id
+# 🟩 Valid (but again, not parseable via LL(1))
+rules9 = [
+    "E -> E + T | E - T | T",
+    "T -> id"
+]
+nonterm9 = ['E', 'T']
+term9 = ['+', '-', 'id']
+input9 = "id + id - id"
+print("----- Test Case 9 -----")
+test_grammar(rules9, nonterm9, term9, input9)
