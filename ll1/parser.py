@@ -316,24 +316,41 @@ def createParseTable():
 
     return mat, grammar_is_LL, terminals
 
+def build_tree(tree_data):
+    lines = []
+    for level, symbol in tree_data:
+        lines.append("  " * level + "|__ " + symbol)
+    return "\n".join(lines)
+
 def validateStringUsingStackBuffer(parsing_table, grammarll1, table_term_list, input_string, term_userdef, start_symbol):
     if not grammarll1:
-        return f"Grammar is not LL(1), parsing not possible."
+        return "Grammar is not LL(1), parsing not possible."
 
     stack = [start_symbol, '$']
     input_buffer = ['$'] + input_string.split()[::-1]
 
-    print(f"\n{'Buffer':>30} {'Stack':>30} {'Action':>40}")
+    tree = []  # Parse tree as a list of (level, symbol)
+    level_stack = [0]  # Parallel to stack, tracks indentation level
+
+    output_lines = []
+    output_lines.append(f"\n{'Buffer':>30} {'Stack':>30} {'Action':>40}")
+    
     while True:
         if stack == ['$'] and input_buffer == ['$']:
-            print(f"{' '.join(input_buffer):>30} {' '.join(stack):>30} {'Valid String!':>40}")
-            return "Valid String!"
+            output_lines.append(f"{' '.join(input_buffer):>30} {' '.join(stack):>30} {'Valid String!':>40}")
+            output_lines.append("\n🎄 Parse Tree:\n" + build_tree(tree))
+            return "\n".join(output_lines)
+
         top_stack = stack[0]
         front_buffer = input_buffer[-1]
+        cur_level = level_stack[0]
+
         if top_stack in term_userdef + ['$']:
             if top_stack == front_buffer:
-                print(f"{' '.join(input_buffer):>30} {' '.join(stack):>30} {'Match ' + top_stack:>40}")
+                output_lines.append(f"{' '.join(input_buffer):>30} {' '.join(stack):>30} {'Match ' + top_stack:>40}")
+                tree.append((cur_level, top_stack))
                 stack.pop(0)
+                level_stack.pop(0)
                 input_buffer.pop()
             else:
                 return "Invalid String! Terminal mismatch."
@@ -344,10 +361,21 @@ def validateStringUsingStackBuffer(parsing_table, grammarll1, table_term_list, i
                 entry = parsing_table[row][col]
                 if entry == '':
                     return f"Invalid String! No rule for [{top_stack}][{front_buffer}]"
-                print(f"{' '.join(input_buffer):>30} {' '.join(stack):>30} {entry:>40}")
+                
+                output_lines.append(f"{' '.join(input_buffer):>30} {' '.join(stack):>30} {entry:>40}")
+
                 lhs_rhs = entry.split("->")
-                rhs = lhs_rhs[1].split() if lhs_rhs[1].strip() != '#' else []
+                lhs = lhs_rhs[0].strip()
+                rhs = lhs_rhs[1].strip().split() if lhs_rhs[1].strip() != '#' else []
+
+                # Update parse tree
+                tree.append((cur_level, lhs))
+                rhs_levels = [cur_level + 1] * len(rhs)
+
+                # Update stack
                 stack = rhs + stack[1:]
+                level_stack = rhs_levels + level_stack[1:]
+
             except ValueError:
                 return f"Invalid String! Symbol not found in parse table."
 
