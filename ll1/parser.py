@@ -1,5 +1,5 @@
-import tkinter as tk
-from tkinter import messagebox, scrolledtext
+import streamlit as st
+import io, sys
 
 # ---------------- PARSER CORE --------------------
 # ------------------- LL(1) PARSER -------------------
@@ -379,8 +379,7 @@ def validateStringUsingStackBuffer(parsing_table, grammarll1, table_term_list, i
             except ValueError:
                 return f"Invalid String! Symbol not found in parse table."
 
-# ------------------ Driver Code ------------------
-
+# ---------------- test_grammar ----------------
 def test_grammar(rules_list, nonterminals, terminals, input_str=None):
     global rules, nonterm_userdef, term_userdef, diction, firsts, follows, start_symbol
 
@@ -391,6 +390,9 @@ def test_grammar(rules_list, nonterminals, terminals, input_str=None):
     firsts = {}
     follows = {}
 
+    buffer = io.StringIO()
+    sys.stdout = buffer
+
     computeAllFirsts()
     start_symbol = list(diction.keys())[0]
     computeAllFollows()
@@ -399,7 +401,7 @@ def test_grammar(rules_list, nonterminals, terminals, input_str=None):
 
     print("\nGrammar is LL(1):", is_ll1)
 
-    if input_str is not None:
+    if input_str:
         result = validateStringUsingStackBuffer(
             parsing_table,
             is_ll1,
@@ -411,71 +413,26 @@ def test_grammar(rules_list, nonterminals, terminals, input_str=None):
         print(f"\nString '{input_str}' validation result:")
         print(result)
 
-# -------------- GUI LOGIC ------------------
+    sys.stdout = sys.__stdout__
+    return buffer.getvalue()
 
-def parse_input():
-    grammar = grammar_text.get("1.0", tk.END).strip().split("\n")
-    nonterms = nonterminals_entry.get().strip().split(",")
-    terms = terminals_entry.get().strip().split(",")
-    input_string = input_string_entry.get().strip()
+# ---------------- Streamlit UI ----------------
+st.title("📘 LL(1) Parser Web App")
 
-    if not grammar or not nonterms or not terms:
-        messagebox.showwarning("Input Error", "Please provide all grammar components.")
-        return
+grammar_input = st.text_area("Enter Grammar Rules (one per line):")
+nonterms_input = st.text_input("Enter Non-Terminals (comma-separated):")
+terms_input = st.text_input("Enter Terminals (comma-separated):")
+input_string = st.text_input("Enter Input String to Validate:")
 
-    try:
-        output_text.delete("1.0", tk.END)
-        test_grammar(grammar, nonterms, terms, input_string)
-    except Exception as e:
-        output_text.insert(tk.END, f"\n❌ Error: {e}\n")
-
-
-def capture_print_output(func):
-    import sys
-    import io
-
-    def wrapper(*args, **kwargs):
-        buffer = io.StringIO()
-        sys.stdout = buffer
+if st.button("Run LL(1) Parser"):
+    if grammar_input and nonterms_input and terms_input:
+        grammar = grammar_input.strip().split("\n")
+        nonterms = nonterms_input.strip().split(",")
+        terms = terms_input.strip().split(",")
         try:
-            func(*args, **kwargs)
-        finally:
-            sys.stdout = sys.__stdout__
-            output_text.insert(tk.END, buffer.getvalue())
-
-    return wrapper
-
-
-# Wrap test_grammar with print capture
-test_grammar = capture_print_output(test_grammar)
-
-# ------------------ GUI ------------------------
-
-root = tk.Tk()
-root.title("LL(1) Parser GUI")
-root.geometry("800x700")
-root.configure(bg="#f0f0f0")
-
-tk.Label(root, text="Enter Grammar Rules (one per line):", bg="#f0f0f0").pack()
-grammar_text = scrolledtext.ScrolledText(root, height=8, width=80)
-grammar_text.pack()
-
-tk.Label(root, text="Enter Non-Terminals (comma-separated):", bg="#f0f0f0").pack()
-nonterminals_entry = tk.Entry(root, width=50)
-nonterminals_entry.pack()
-
-tk.Label(root, text="Enter Terminals (comma-separated):", bg="#f0f0f0").pack()
-terminals_entry = tk.Entry(root, width=50)
-terminals_entry.pack()
-
-tk.Label(root, text="Enter Input String to Validate:", bg="#f0f0f0").pack()
-input_string_entry = tk.Entry(root, width=50)
-input_string_entry.pack()
-
-tk.Button(root, text="Run LL(1) Parser", command=parse_input, bg="#007acc", fg="white", padx=10, pady=5).pack(pady=10)
-
-tk.Label(root, text="Output:", bg="#f0f0f0").pack()
-output_text = scrolledtext.ScrolledText(root, height=20, width=95)
-output_text.pack()
-
-root.mainloop()
+            output = test_grammar(grammar, nonterms, terms, input_string)
+            st.text_area("Output", output, height=400)
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
+    else:
+        st.warning("⚠️ Please provide all grammar components.")
